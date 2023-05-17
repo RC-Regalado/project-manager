@@ -1,0 +1,58 @@
+#!/bin/bash 
+
+uri="$HOME/git"
+main="main.cpp"
+session="cpp.vim"
+
+# Seleccionar el proceso según el argumento
+case "$1" in
+  cpp)
+    echo "Ejecutando proceso para C++"
+    # Agrega aquí los comandos para ejecutar el proceso de C++
+    uri=$uri/cpp_projects
+    session=$uri/$session
+    ;;
+  java)
+    echo "Ejecutando proceso para Java"
+    # Agrega aquí los comandos para ejecutar el proceso de Java
+    ;;
+  php)
+    echo "Ejecutando proceso para PHP"
+    uri=$uri/php_projects
+    # Agrega aquí los comandos para ejecutar el proceso de PHP
+    ;;
+  vue)
+    echo "Ejecutando proceso para Vue"
+    # Agrega aquí los comandos para ejecutar el proceso de Vue
+    ;;
+  *)
+    echo "Argumento no válido. Los posibles valores son: cpp, java, php o vue."
+    exit 1
+    ;;
+esac
+
+
+dirs=`ls $uri`
+
+i=1
+for dir in $dirs; do
+  if [ -d "$uri/$dir" ]; then
+    echo "$i- $dir"
+    ((i++))
+  fi
+done
+
+
+read -p ">> " num
+
+if [ $num -eq 0 ]; then
+  exit 0
+fi
+
+dir=$(echo "$dirs" | sed "${num}q;d")
+dir=$(echo "$dir" | sed 's/[0-9]\+- //')
+
+echo $dir
+
+cd $uri/$dir
+nvim .
