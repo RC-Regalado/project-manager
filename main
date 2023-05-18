@@ -1,29 +1,20 @@
 #!/bin/bash 
 
-uri="$HOME/git"
 main="main.cpp"
-session="cpp.vim"
+dir=""
 
-# Seleccionar el proceso según el argumento
 case "$1" in
   cpp)
-    echo "Ejecutando proceso para C++"
-    # Agrega aquí los comandos para ejecutar el proceso de C++
-    uri=$uri/cpp_projects
-    session=$uri/$session
+    dir=cpp_projects
     ;;
   java)
-    echo "Ejecutando proceso para Java"
-    # Agrega aquí los comandos para ejecutar el proceso de Java
+    dir=java_projects
     ;;
   php)
-    echo "Ejecutando proceso para PHP"
-    uri=$uri/php_projects
-    # Agrega aquí los comandos para ejecutar el proceso de PHP
+    dir=php_projects
     ;;
   vue)
-    echo "Ejecutando proceso para Vue"
-    # Agrega aquí los comandos para ejecutar el proceso de Vue
+    dir=web_projects
     ;;
   *)
     echo "Argumento no válido. Los posibles valores son: cpp, java, php o vue."
@@ -31,19 +22,23 @@ case "$1" in
     ;;
 esac
 
+uri="$HOME/git/${dir}" 
 
 dirs=`ls $uri`
 
 i=1
-for dir in $dirs; do
-  if [ -d "$uri/$dir" ]; then
-    echo "$i- $dir"
-    ((i++))
-  fi
-done
 
-
-read -p ">> " num
+if [ $# -eq 2 ]; then
+  num=$2
+else
+  for dir in $dirs; do
+    if [ -d "$uri/$dir" ]; then
+      echo "$i- $dir"
+      ((i++))
+    fi
+  done
+  read -p ">> " num
+fi
 
 if [ $num -eq 0 ]; then
   exit 0
@@ -55,4 +50,10 @@ dir=$(echo "$dir" | sed 's/[0-9]\+- //')
 echo $dir
 
 cd $uri/$dir
-nvim .
+
+if [[ -f .nvim ]]; then
+  nvim -S .nvim
+else
+  touch .nvim
+  nvim 
+fi
