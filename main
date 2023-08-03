@@ -3,14 +3,6 @@ set -e
 main="main.cpp"
 dir=""
 
-function new() {
-  echo "unimplemented"
-}
-
-function run(){
-  action=$1
-}
-
 function print_help(){
   echo "Usage of $0"
   echo "Argumento no válido. Los posibles valores son: cpp, java, php o vue."
@@ -21,6 +13,105 @@ if [[ "$#" -eq 0 ]]; then
   exit 1
 fi
 
+## NEW {{{
+function new() {
+  uri=$1
+  name=$2
+
+  dir="${uri}/${name}"
+
+  if [ -d $dir ]; then
+    echo "El proyecto ya existe."
+    exit 4
+  fi
+
+  cmd=''
+  builder=0
+
+  case "$typ" in
+    cpp)
+      cmd="touch ${main}"
+      ;;
+    java)
+      cmd=""
+      ;;
+    php)
+      cmd="touch index.php"
+      ;;
+    vue)
+      cmd="vue create --preset projects -b ${name}"
+      builder=1
+      ;;
+  esac
+
+  if [ $builder -eq 0 ]; then
+    mkdir $dir
+    cd $dir
+    eval $cmd
+  else
+    cd $uri
+    eval $cmd
+    cd $name
+  fi
+}
+## }}}
+
+## RUN {{{
+function run(){
+  echo "$3";
+  uri=$1
+  name=$2
+  type=$3
+
+  cd $uri/$name
+
+  case "$type" in 
+    vue)
+      npm run serve
+      ;;
+  esac
+}
+# }}}
+
+## DEFAULT {{{
+function default() {
+  uri=$1
+
+  dirs=`ls $uri`
+
+  i=1
+
+  if [[ $2 =~ ^[0-9]$ ]]; then
+    num=$2
+  else
+    for dir in $dirs; do
+      if [ -d "$uri/$dir" ]; then
+        echo "$i- $dir"
+        ((i++))
+      fi
+    done
+    read -p ">> " num
+  fi
+
+  if [ $num -eq 0 ]; then
+    exit 0
+  fi
+
+  dir=$(echo "$dirs" | sed "${num}q;d")
+  dir=$(echo "$dir" | sed 's/[0-9]\+- //')
+
+  echo $dir
+  cd $uri/$dir
+
+  if [[ -f .nvim ]]; then
+    nvim -S .nvim
+  else
+    nvim .
+  fi
+}
+## }}}
+
+## ARGS {{{
 # n => new
 # r => run
 # u => undone
@@ -33,21 +124,24 @@ eval "set -- $opts"
 
 name=''
 
+opt=''
+
 new=0
 reset=0
 undone=0
-typ=""
+
+typ=''
 
 while (( $# >> 0 )); do
   case "$1" in
     ("-n")
-      name=$2; new=1 ;shift 2
+      name=$2; opt=$1 ; break
       ;;
     ("-r")
-      name=$2; reset=1; shift 2
+      name=$2; opt=$1; shift 2
       ;;
     ("-u")
-      name=$2; undone=1; shift 2
+      name=$2; opt=$1; shift 2
       ;;
     ("-t")
       typ=$2; shift 2
@@ -90,75 +184,20 @@ case "$typ" in
     exit 3
     ;;
 esac
+## }}}
 
 uri="$HOME/git/${dir}" 
 
-if [[ $new -eq 1 ]]; then
-  dir="${uri}/${name}"
+echo $opt
 
-  if [ -d $dir ]; then
-    echo "El proyecto ya existe."
-    exit 4
-  fi
+case "$opt" in
+  "-n")
+    new $uri $name
+    ;;
+  "-r")
+    run $uri $name $typ
+    ;;
+  *)
+    default $uri $2
+esac
 
-  cmd=''
-  builder=0
-
-  case "$typ" in
-    cpp)
-      cmd="touch ${main}"
-      ;;
-    java)
-      cmd=""
-      ;;
-    php)
-      cmd="touch index.php"
-      ;;
-    vue)
-      cmd="vue create --preset projects -b ${name}"
-      builder=1
-      ;;
-  esac
-
-  if [ $builder -eq 0 ]; then
-    mkdir $dir
-    cd $dir
-    eval $cmd
-  else
-    cd $uri
-    eval $cmd
-    cd $name
-  fi
-else
-  dirs=`ls $uri`
-
-  i=1
-
-  if [ $# -eq 2 ]; then
-    num=$2
-  else
-    for dir in $dirs; do
-      if [ -d "$uri/$dir" ]; then
-        echo "$i- $dir"
-        ((i++))
-      fi
-    done
-    read -p ">> " num
-  fi
-
-  if [ $num -eq 0 ]; then
-    exit 0
-  fi
-
-  dir=$(echo "$dirs" | sed "${num}q;d")
-  dir=$(echo "$dir" | sed 's/[0-9]\+- //')
-
-  echo $dir
-  cd $uri/$dir
-fi
-
-if [[ -f .nvim ]]; then
-  nvim -S .nvim
-else
-  nvim .
-fi
