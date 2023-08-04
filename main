@@ -96,14 +96,13 @@ function default() {
     done
     read -p ">> " num
 
+    if [ $num -eq 0 ]; then
+      exit 0
+    fi
+
     dir=$(echo "$dirs" | sed "${num}q;d")
     dir=$(echo "$dir" | sed 's/[0-9]\+- //') 
   fi
-
-  if [ $num -eq 0 ]; then
-    exit 0
-  fi
-
 
   echo $dir
   cd $uri/$dir
