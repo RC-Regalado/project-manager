@@ -58,7 +58,6 @@ function new() {
 
 ## RUN {{{
 function run(){
-  echo "$3";
   uri=$1
   name=$2
   type=$3
@@ -67,7 +66,10 @@ function run(){
 
   case "$type" in 
     vue)
-      npm run serve
+      npm run serve;
+      ;;
+    php)
+      php artisan serve;
       ;;
   esac
 }
@@ -83,6 +85,8 @@ function default() {
 
   if [[ $2 =~ ^[0-9]$ ]]; then
     num=$2
+  elif [[ $2 =~ ^[a-zA-Z]+$ ]]; then
+    dir=$2
   else
     for dir in $dirs; do
       if [ -d "$uri/$dir" ]; then
@@ -91,14 +95,15 @@ function default() {
       fi
     done
     read -p ">> " num
+
+    dir=$(echo "$dirs" | sed "${num}q;d")
+    dir=$(echo "$dir" | sed 's/[0-9]\+- //') 
   fi
 
   if [ $num -eq 0 ]; then
     exit 0
   fi
 
-  dir=$(echo "$dirs" | sed "${num}q;d")
-  dir=$(echo "$dir" | sed 's/[0-9]\+- //')
 
   echo $dir
   cd $uri/$dir
@@ -115,9 +120,10 @@ function default() {
 # n => new
 # r => run
 # u => undone
+# e => edit
 # t => type
 
-shortopts="n:r:u:t:"
+shortopts="n:r:u:e:t:"
 opts=$( getopt -o "$shortopts" -l "help:" -n "${0##*/}" -- "$@" )
 
 eval "set -- $opts"
@@ -141,6 +147,9 @@ while (( $# >> 0 )); do
       name=$2; opt=$1; shift 2
       ;;
     ("-u")
+      name=$2; opt=$1; shift 2
+      ;;
+    ("-e")
       name=$2; opt=$1; shift 2
       ;;
     ("-t")
@@ -188,14 +197,15 @@ esac
 
 uri="$HOME/git/${dir}" 
 
-echo $opt
-
 case "$opt" in
   "-n")
     new $uri $name
     ;;
   "-r")
     run $uri $name $typ
+    ;;
+  "-e")
+    default $uri $name
     ;;
   *)
     default $uri $2
